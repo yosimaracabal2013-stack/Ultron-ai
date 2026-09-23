@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09090d">
+  <meta name="description" content="ULTRON — a personal AI assistant interface.">
+  <title>ULTRON | Personal AI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="ULTRON home"><span class="brand-mark"><span></span></span><span>ULTRON<small>PERSONAL INTELLIGENCE</small></span></a>
+      <div class="status"><i></i><span id="statusText">SYSTEM ONLINE · DEMO MODE</span></div>
+    </header>
+    <section class="hero" aria-label="Assistant status">
+      <div class="eyebrow"><span></span> YOUR ASSISTANT, YOUR RULES</div>
+      <h1>How can I <em>help</em> you?</h1>
+      <p class="subhead">A new interface. A mind still under construction.</p>
+      <div class="reactor" aria-hidden="true"><div class="reactor-ring ring-a"></div><div class="reactor-ring ring-b"></div><div class="reactor-core"><span>U</span></div><div class="orbit-dot"></div></div>
+      <p class="system-note"><span class="pulse"></span> ULTRON IS STANDING BY</p>
+    </section>
+    <section class="chat-panel" aria-label="Chat with ULTRON">
+      <div class="panel-heading"><div><span class="section-label">CONSOLE / 01</span><h2>Conversation</h2></div><button id="clearBtn" class="quiet-btn" type="button" title="Clear conversation">CLEAR <span>↻</span></button></div>
+      <div id="messages" class="messages" aria-live="polite" aria-relevant="additions">
+        <article class="message assistant"><div class="avatar">U</div><div class="bubble-wrap"><span class="speaker">ULTRON <time>NOW</time></span><div class="bubble">Hello. I'm ULTRON. My interface is ready, but my live AI connection hasn't been configured yet. You can test the chat and voice controls in demo mode.</div></div></article>
+      </div>
+      <form id="chatForm" class="composer">
+        <label class="sr-only" for="messageInput">Message ULTRON</label>
+        <textarea id="messageInput" rows="1" maxlength="2000" placeholder="Send a message…" autocomplete="off"></textarea>
+        <div class="composer-actions"><span class="hint">ENTER TO SEND · SHIFT + ENTER FOR NEW LINE</span><div class="action-buttons"><button id="voiceBtn" class="icon-btn" type="button" aria-label="Start voice input" title="Voice input">♩</button><button class="send-btn" type="submit">SEND <span>↗</span></button></div></div>
+      </form>
+      <div class="panel-foot"><span><i></i> LOCAL DEMO</span><span>AI BACKEND NOT CONNECTED</span></div>
+    </section>
+    <footer><span>ULTRON <b>·</b> PERSONAL PROJECT</span><span>BUILT IN PROGRESS <b>✦</b></span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
