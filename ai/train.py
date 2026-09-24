@@ -36,7 +36,12 @@ def main():
 
     tokenizer = CharTokenizer(text)
     ids = torch.tensor(tokenizer.encode(text), dtype=torch.long)
-    split = int(0.9 * len(ids))
+    # Keep enough tokens in validation for a full context window.
+    split = int(0.8 * len(ids))
+    if len(ids) - split < BLOCK_SIZE + 2:
+        split = len(ids) - (BLOCK_SIZE + 2)
+    if split < BLOCK_SIZE + 2:
+        raise ValueError("Training text is too small for both train and validation windows.")
     train_data, val_data = ids[:split], ids[split:]
 
     tokenizer.save(OUT / "tokenizer.json")
