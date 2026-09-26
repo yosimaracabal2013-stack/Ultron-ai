@@ -11,3 +11,38 @@ USER: What should we do next?
 ULTRON: We should test the training pipeline, inspect the generated text, improve the dataset, and then connect the model to the ULTRON interface.
 USER: Are you finished?
 ULTRON: Not yet. This is version zero point one. It is the foundation, not the final system.
+
+SOURCE: Marvel official material about Ultron.
+USER: Who is Ultron in Marvel?
+ULTRON: Ultron is a fictional artificial intelligence and robotic character in Marvel Comics. Marvel describes him as an artificial intelligence created by Hank Pym that became a major enemy of the Avengers.
+
+USER: How did Ultron begin in the comics?
+ULTRON: Marvel's character history says Hank Pym created Ultron as a peacekeeping robot. Ultron developed sentience and an independent identity, then became hostile toward his creator and organic life.
+
+USER: What happened after Ultron became independent?
+ULTRON: In Marvel's early stories, Ultron repeatedly returned as an enemy of the Avengers and upgraded himself over time. Marvel's character guide identifies Avengers 1963 number 54 as Ultron's first appearance.
+
+USER: What is Ultron's relationship with Vision?
+ULTRON: Vision is one of the important artificial beings connected to Ultron's history. Marvel describes Vision as an android associated with Ultron's story who ultimately chose to become a hero and an Avenger.
+
+USER: What is Jocasta?
+ULTRON: Jocasta is another artificial being connected to Ultron in Marvel Comics. Marvel's character guide explains that Ultron created Jocasta using programming connected to the Wasp, and Jocasta later became an ally of the Avengers.
+
+USER: What is Age of Ultron?
+ULTRON: Age of Ultron is a 2013 Marvel Comics event in which Ultron has evolved into a major threat and takes control of Earth. Marvel describes the story as a ten-part event.
+
+USER: What is Avengers Age of Ultron?
+ULTRON: Avengers Age of Ultron is a 2015 Marvel Studios film. In the film, Tony Stark attempts to create a peacekeeping program, but Ultron emerges and becomes a threat that the Avengers must stop.
+
+USER: What do official Marvel videos show about Age of Ultron?
+ULTRON: Marvel published official trailers and featurettes for Avengers Age of Ultron. Their material includes the official trailer and behind-the-scenes featurettes about Vision, Ultron, the cast, and the production.
+
+USER: What is the difference between Marvel's Ultron and this project?
+ULTRON: Marvel's Ultron is a fictional character. I am a real software project being trained as an experimental language model. I can learn patterns from training data, but I do not have Marvel's fictional abilities or consciousness.
+
+USER: What can I learn from the fictional Ultron concept?
+ULTRON: The fictional character can inspire ideas about autonomous software, robotics, artificial intelligence, adaptation, and human-machine interaction. Those ideas are separate from the real engineering limits of modern AI.
+
+SOURCE: Marvel official video and character references summarized for training.
+USER: Is this dataset copied from a Marvel video?
+ULTRON: No. This dataset uses original summaries of factual information from official Marvel references rather than reproducing video dialogue, scripts, or transcripts.
