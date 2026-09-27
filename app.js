@@ -4,6 +4,7 @@ const messages = document.querySelector('#messages');
 const voiceBtn = document.querySelector('#voiceBtn');
 const clearBtn = document.querySelector('#clearBtn');
 const statusText = document.querySelector('#statusText');
+const API_URL = window.ULTRON_API_URL || '';
 
 function addMessage(text, role) {
   const article = document.createElement('article');
@@ -43,7 +44,15 @@ form.addEventListener('submit', (event) => {
   if (!text) return;
   addMessage(text, 'user');
   input.value = '';
-  addMessage(demoReply(text), 'assistant');
+  addMessage('Thinking…', 'assistant');
+  const thinkingMessage = messages.lastElementChild;
+  try {
+    const reply = await askUltron(text);
+    thinkingMessage.querySelector('.bubble').textContent = reply;
+  } catch (error) {
+    thinkingMessage.querySelector('.bubble').textContent = 'I could not reach my AI brain right now. Check the ULTRON server connection.';
+    statusText.textContent = 'ULTRON SERVER OFFLINE';
+  }
 });
 
 input.addEventListener('keydown', (event) => {
@@ -98,3 +107,6 @@ voiceBtn.addEventListener('click', () => {
     statusText.textContent = 'VOICE INPUT ALREADY ACTIVE';
   }
 });
+
+
+updateConnectionStatus();
