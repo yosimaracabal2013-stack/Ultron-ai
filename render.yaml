@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ultron-api
+    runtime: docker
+    branch: ultron-brain-v0.1
+    dockerfilePath: ./server/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ULTRON_CHECKPOINT
+        value: /etc/secrets/ultron_v0_2.pt
+      - key: ULTRON_TOKENIZER
+        value: /etc/secrets/tokenizer_v0_2.json
