@@ -10,8 +10,8 @@ from ai.tokenizer import CharTokenizer
 from ai.model import UltronTransformer
 
 ROOT = Path(__file__).resolve().parents[1]
-CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", ROOT / "ai" / "checkpoints" / "ultron_v0_2.pt"))
-TOKENIZER = Path(os.getenv("ULTRON_TOKENIZER", ROOT / "ai" / "checkpoints" / "tokenizer_v0_2.json"))
+CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", "/etc/secrets/ultron_v0_2.pt"))
+TOKENIZER = Path(os.getenv("ULTRON_TOKENIZER", "/etc/secrets/tokenizer_v0_2.json"))
 
 app = FastAPI(title="ULTRON v0.2 API")
 
@@ -43,6 +43,10 @@ def load_model():
     model = UltronTransformer(**checkpoint["config"])
     model.load_state_dict(checkpoint["model"])
     model.eval()
+
+@app.get("/")
+def root():
+    return {"name": "ULTRON", "model": "v0.2", "status": "online" if model is not None else "offline"}
 
 @app.get("/health")
 def health():
