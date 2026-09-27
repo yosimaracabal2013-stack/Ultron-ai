@@ -8,9 +8,9 @@ RUN pip install --no-cache-dir -r server/requirements.txt
 COPY ai ./ai
 COPY server ./server
 
-ENV ULTRON_CHECKPOINT=/app/ai/checkpoints/ultron_v0_2.pt
-ENV ULTRON_TOKENIZER=/app/ai/checkpoints/tokenizer_v0_2.json
+ENV ULTRON_CHECKPOINT=/etc/secrets/ultron_v0_2.pt
+ENV ULTRON_TOKENIZER=/etc/secrets/tokenizer_v0_2.json
 
-EXPOSE 8000
+EXPOSE 10000
 
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
