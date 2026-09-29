@@ -41,9 +41,18 @@ def load_model():
             f"Missing ULTRON files. Expected {CHECKPOINT} and {TOKENIZER}."
         )
     tokenizer = CharTokenizer.load(TOKENIZER)
-    checkpoint = torch.load(CHECKPOINT, map_location="cpu")
+    checkpoint = torch.load(CHECKPOINT, map_location="cpu", weights_only=False)
     model = UltronTransformer(**checkpoint["config"])
-    model.load_state_dict(checkpoint["model"])
+    if checkpoint.get("format") == "ultron-int8-v1":
+        state = {}
+        for name, tensor in checkpoint["model_int8"].items():
+            if name in checkpoint["scales"]:
+                state[name] = tensor.float() * float(checkpoint["scales"][name])
+            else:
+                state[name] = tensor
+        model.load_state_dict(state)
+    else:
+        model.load_state_dict(checkpoint["model"])
     model.eval()
 
 @app.get("/")
