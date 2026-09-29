@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ai.tokenizer import CharTokenizer
 from ai.model import UltronTransformer
+from ai.mind import UltronMind
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", "/etc/secrets/ultron_v0_2.pt"))
@@ -25,6 +26,7 @@ app.add_middleware(
 
 model = None
 tokenizer = None
+mind = UltronMind()
 
 class ChatRequest(BaseModel):
     message: str
@@ -48,6 +50,10 @@ def load_model():
 def root():
     return {"name": "ULTRON", "model": "v0.2", "status": "online" if model is not None else "offline"}
 
+@app.get("/state")
+def state():
+    return {"emotion": mind.emotion.snapshot(), "memory_items": len(mind.memory), "actions": mind.action_count}
+
 @app.get("/health")
 def health():
     return {"ok": model is not None, "model": "ULTRON v0.2"}
@@ -62,18 +68,22 @@ def chat(request: ChatRequest):
     if len(message) > 2000:
         raise HTTPException(status_code=400, detail="Message is too long.")
     try:
+        mind.perceive(message)
+        decision = mind.deliberate(message)
         prompt = f"User: {message}\nULTRON:"
         ids = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long)
         with torch.no_grad():
             output = model.generate(
                 ids,
                 max(1, min(request.max_tokens, 300)),
-                temperature=max(0.1, min(request.temperature, 1.5)),
+                temperature=max(0.1, min(decision["temperature"] * request.temperature / 0.8, 1.5)),
             )[0].tolist()
         text = tokenizer.decode(output)
         reply = text[len(prompt):].strip()
         if not reply:
             reply = "I received your message, but I need more training before I can answer clearly."
-        return {"reply": reply}
+        mind.remember(message, reply)
+        mind.settle()
+        return {"reply": reply, "action": decision["action"], "emotion": mind.emotion.snapshot()}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
