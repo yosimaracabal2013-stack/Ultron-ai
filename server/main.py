@@ -40,9 +40,9 @@ class ChatRequest(BaseModel):
 def load_model():
     global model, tokenizer
     if not CHECKPOINT.exists() or not TOKENIZER.exists():
-        raise RuntimeError(
-            f"Missing ULTRON files. Expected {CHECKPOINT} and {TOKENIZER}."
-        )
+        model = None
+        tokenizer = None
+        return
     tokenizer = CharTokenizer.load(TOKENIZER)
     checkpoint = torch.load(CHECKPOINT, map_location="cpu", weights_only=False)
     model = UltronTransformer(**checkpoint["config"])
