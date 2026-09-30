@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07070a">
-  <meta name="description" content="ULTRON — a personal AI assistant interface.">
-  <title>ULTRON | Personal AI</title>
+  <meta name="description" content="ULTRON — a personal AI command center.">
+  <title>ULTRON | Personal Intelligence</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,58 +23,90 @@
       <div class="eyebrow"><span></span> YOUR ASSISTANT · YOUR RULES</div>
       <h1>Meet <em>ULTRON.</em></h1>
       <p class="subhead">A personal AI built from the ground up.</p>
-
       <div class="reactor" aria-hidden="true">
         <div class="reactor-ring ring-a"></div>
         <div class="reactor-ring ring-b"></div>
         <div class="reactor-core"><span>U</span></div>
         <div class="orbit-dot"></div>
       </div>
-
-      <div class="system-note"><span class="pulse"></span> <span id="systemNote">INITIALIZING CORE SYSTEMS</span></div><div class="emotion-readout" id="emotionState"><span>EMOTIONAL STATE · <b id="emotionLabel">CALM</b></span></div>
+      <div class="system-note"><span class="pulse"></span> <span id="systemNote">INITIALIZING CORE SYSTEMS</span></div>
+      <div class="emotion-readout" id="emotionState"><span>EMOTIONAL STATE · <b id="emotionLabel">CALM</b></span></div>
     </section>
 
     <section class="quick-grid" aria-label="Quick prompts">
       <button class="quick-card" data-prompt="Who are you?"><span>01</span><strong>IDENTITY</strong><small>Ask ULTRON about itself</small></button>
-      <button class="quick-card" data-prompt="Explain how you work."><span>02</span><strong>ARCHITECTURE</strong><small>Explore the AI brain</small></button>
-      <button class="quick-card" data-prompt="What can you do?"><span>03</span><strong>CAPABILITIES</strong><small>See what ULTRON knows</small></button>
+      <button class="quick-card" data-prompt="What do you remember?"><span>02</span><strong>MEMORY</strong><small>Check the personal memory core</small></button>
+      <button class="quick-card" data-prompt="What can you do?"><span>03</span><strong>CAPABILITIES</strong><small>Explore the AI system</small></button>
     </section>
 
-    <section class="chat-panel" aria-label="Chat with ULTRON">
-      <div class="panel-heading">
-        <div><span class="section-label">CONSOLE / 01</span><h2>Conversation</h2></div>
-        <div class="panel-tools">
-          <span class="model-chip">NEURAL CORE · v0.2</span>
-          <button id="clearBtn" class="quiet-btn" type="button" title="Clear conversation">CLEAR <span>↻</span></button>
-        </div>
-      </div>
-
-      <div id="messages" class="messages" aria-live="polite" aria-relevant="additions">
-        <article class="message assistant">
-          <div class="avatar">U</div>
-          <div class="bubble-wrap">
-            <span class="speaker">ULTRON <time>READY</time></span>
-            <div class="bubble">Hello. I'm ULTRON. My trained neural core is ready for connection.</div>
-          </div>
-        </article>
-      </div>
-
-      <form id="chatForm" class="composer">
-        <label class="sr-only" for="messageInput">Message ULTRON</label>
-        <textarea id="messageInput" rows="1" maxlength="2000" placeholder="Talk to ULTRON…" autocomplete="off"></textarea>
-        <div class="composer-actions">
-          <span class="hint">ENTER TO SEND · SHIFT + ENTER FOR NEW LINE</span>
-          <div class="action-buttons">
-            <button id="voiceBtn" class="icon-btn" type="button" aria-label="Start voice input" title="Voice input">◉</button>
-            <button class="send-btn" type="submit">SEND <span>↗</span></button>
+    <section class="command-grid">
+      <section class="chat-panel" aria-label="Chat with ULTRON">
+        <div class="panel-heading">
+          <div><span class="section-label">CONSOLE / 01</span><h2>Conversation</h2></div>
+          <div class="panel-tools">
+            <span class="model-chip">NEURAL CORE · v0.2</span>
+            <button id="clearBtn" class="quiet-btn" type="button">CLEAR <span>↻</span></button>
           </div>
         </div>
-      </form>
+        <div id="messages" class="messages" aria-live="polite" aria-relevant="additions">
+          <article class="message assistant">
+            <div class="avatar">U</div>
+            <div class="bubble-wrap">
+              <span class="speaker">ULTRON <time>READY</time></span>
+              <div class="bubble">Hello, Father. My neural core is standing by.</div>
+            </div>
+          </article>
+        </div>
+        <form id="chatForm" class="composer">
+          <label class="sr-only" for="messageInput">Message ULTRON</label>
+          <textarea id="messageInput" rows="1" maxlength="2000" placeholder="Talk to ULTRON…" autocomplete="off"></textarea>
+          <div class="composer-actions">
+            <span class="hint">ENTER TO SEND · SHIFT + ENTER FOR NEW LINE</span>
+            <div class="action-buttons">
+              <button id="voiceBtn" class="icon-btn" type="button" aria-label="Start voice input" title="Voice input">◉</button>
+              <button class="send-btn" type="submit">SEND <span>↗</span></button>
+            </div>
+          </div>
+        </form>
+        <div class="panel-foot">
+          <span><i></i> <span id="modelState">MODEL READY</span></span>
+          <span>TRAINED TRANSFORMER · LOCAL PROJECT</span>
+        </div>
+      </section>
 
-      <div class="panel-foot">
-        <span><i></i> <span id="modelState">MODEL READY</span></span>
-        <span>TRAINED TRANSFORMER · LOCAL PROJECT</span>
-      </div>
+      <aside class="side-stack">
+        <section class="side-panel research-panel" aria-label="ULTRON research">
+          <div class="side-heading">
+            <div><span class="section-label">TOOLS / 02</span><h2>Research</h2></div>
+            <span class="tool-chip">WEB</span>
+          </div>
+          <p class="side-copy">Search a topic and retrieve source cards through ULTRON's research core.</p>
+          <form id="researchForm" class="research-form">
+            <input id="researchInput" maxlength="120" placeholder="Search a topic…" autocomplete="off">
+            <button type="submit">SEARCH</button>
+          </form>
+          <div id="researchResults" class="research-results"><div class="empty-state">RESEARCH CORE STANDBY</div></div>
+        </section>
+
+        <section class="side-panel memory-panel" aria-label="ULTRON memory">
+          <div class="side-heading">
+            <div><span class="section-label">CORE / 03</span><h2>Memory</h2></div>
+            <span class="memory-count" id="memoryCount">0</span>
+          </div>
+          <p class="side-copy">Personal memories stay in this browser and survive refreshes.</p>
+          <div id="memoryList" class="memory-list"></div>
+          <form id="memoryForm" class="memory-form">
+            <input id="memoryInput" maxlength="180" placeholder="Tell ULTRON to remember…">
+            <button type="submit">SAVE</button>
+          </form>
+        </section>
+      </aside>
+    </section>
+
+    <section class="status-strip">
+      <div><span class="status-title">EMOTIONAL MODEL</span><span id="emotionSummary">CALM</span></div>
+      <div><span class="status-title">MEMORY CORE</span><span id="memoryStatus">LOCAL · READY</span></div>
+      <div><span class="status-title">RESEARCH CORE</span><span>WIKIPEDIA</span></div>
     </section>
 
     <footer><span>ULTRON <b>·</b> PERSONAL PROJECT</span><span>BUILT IN PROGRESS <b>✦</b></span></footer>
