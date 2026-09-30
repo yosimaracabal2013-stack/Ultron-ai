@@ -6,6 +6,7 @@ COPY server/requirements.txt ./server/requirements.txt
 RUN pip install --no-cache-dir -r server/requirements.txt
 
 COPY ai ./ai
+RUN cd ai && ULTRON_CPU_STEPS=300 python train_v0_2.py
 COPY server ./server
 
 ENV ULTRON_CHECKPOINT=/app/ai/checkpoints/ultron_v0_2.pt
