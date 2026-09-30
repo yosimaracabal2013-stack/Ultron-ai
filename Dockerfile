@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir -r server/requirements.txt
 COPY ai ./ai
 COPY server ./server
 
-ENV ULTRON_CHECKPOINT=/etc/secrets/ultron_v0_2.pt
-ENV ULTRON_TOKENIZER=/etc/secrets/tokenizer_v0_2.json
+ENV ULTRON_CHECKPOINT=/app/ai/checkpoints/ultron_v0_2.pt
+ENV ULTRON_TOKENIZER=/app/ai/checkpoints/tokenizer_v0_2.json
 
 EXPOSE 10000
 
