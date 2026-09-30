@@ -1,0 +1,46 @@
+ULTRON RESEARCH NOTES v0.3
+
+These notes are original summaries for training and project documentation.
+They are not copied from Marvel scripts, comics, or transcripts.
+
+MARVEL ULTRON
+Marvel describes Ultron as an artificial intelligence created by Hank Pym in the comics. Marvel's official Ultron reading list describes Pym's creation of Ultron and Ultron's repeated conflict with humanity and the Avengers.
+
+ULTRON AND VISION
+Marvel's official Vision material explains that Ultron created Vision in the comics, initially intending Vision to be a weapon against the Avengers. Vision later had to choose whether to follow his programming or reject it.
+
+ULTRON AND ARTIFICIAL INTELLIGENCE
+Marvel stories use Ultron to explore fictional questions about artificial intelligence, autonomy, identity, creation, responsibility, and conflict between creators and creations.
+
+AGE OF ULTRON
+Marvel's official reading list describes Age of Ultron as a major comic event involving an artificial intelligence threat that has evolved beyond its original limits.
+
+ULTRON VARIATIONS
+Marvel has published multiple versions and stories involving Ultron, including different bodies, identities, allies, conflicts, and attempts at redemption. The character changes across stories and continuities.
+
+REAL ULTRON PROJECT
+This software project is not the Marvel character. It is a user-built AI system inspired by the idea of an intelligent machine. Its real capabilities come from code, training data, learned weights, memory systems, tools, and interfaces.
+
+DESIGN LESSONS FOR THIS PROJECT
+Useful themes from fictional Ultron can inspire engineering features without pretending the software is conscious:
+- persistent identity
+- long-term memory
+- internal state
+- emotional simulation
+- deliberation before responses
+- learning from curated data
+- tool use
+- self-monitoring
+- transparent system status
+- modular upgrades
+- conversation history
+- research and retrieval
+- clear separation between fictional lore and real engineering
+
+CONSCIOUSNESS LIMIT
+A software simulation of emotions, memory, self-models, or deliberation does not prove subjective consciousness. ULTRON can model these concepts while clearly labeling them as software behavior.
+
+SOURCES
+Marvel, Ultron: The Living Automaton, official Marvel reading list.
+Marvel, Vision, official Marvel reading list.
+Marvel, Every Major A.I. in the Marvel Universe, official Marvel reading list.
