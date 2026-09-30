@@ -1,9 +1,10 @@
-"""ULTRON v0.2 inference API."""
+"""ULTRON v0.2 inference and research API."""
 
 from pathlib import Path
 import os
+import httpx
 import torch
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from ai.tokenizer import CharTokenizer
@@ -83,6 +84,42 @@ def health():
     return {"ok": model is not None, "model": "ULTRON v0.2"}
 
 
+@app.get("/research")
+async def research(q: str = Query(..., min_length=2, max_length=120)):
+    """Search Wikipedia's public API and return concise source cards."""
+    query = q.strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Research query is empty.")
+
+    url = "https://en.wikipedia.org/w/rest.php/v1/search/page"
+    params = {"q": query, "limit": 6}
+    headers = {"User-Agent": "ULTRON-personal-ai/0.3"}
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            response = await client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail=f"Research service unavailable: {exc}")
+
+    results = []
+    for page in data.get("pages", []):
+        title = page.get("title", "")
+        description = page.get("description") or page.get("excerpt") or ""
+        key = page.get("key", "")
+        if not title or not key:
+            continue
+        results.append({
+            "title": title,
+            "description": description,
+            "url": f"https://en.wikipedia.org/wiki/{key.replace(' ', '_')}",
+            "source": "Wikipedia",
+        })
+
+    return {"query": query, "results": results}
+
+
 @app.post("/chat")
 def chat(request: ChatRequest):
     if model is None or tokenizer is None:
@@ -98,18 +135,17 @@ def chat(request: ChatRequest):
         mind.perceive(message)
         decision = mind.deliberate(message)
 
-        # Keep the personal-memory context compact so the small v0.2 model
-        # does not spend its whole context window on memory.
         memories = [m.strip() for m in request.memory if m and m.strip()]
         memories = memories[-6:]
         memory_text = " | ".join(memories)
         if len(memory_text) > 420:
             memory_text = memory_text[-420:]
 
-        if memory_text:
-            prompt = f"Memory: {memory_text}\nUser: {message}\nULTRON:"
-        else:
-            prompt = f"User: {message}\nULTRON:"
+        prompt = (
+            f"Memory: {memory_text}\nUser: {message}\nULTRON:"
+            if memory_text
+            else f"User: {message}\nULTRON:"
+        )
 
         ids = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long)
 
@@ -132,7 +168,6 @@ def chat(request: ChatRequest):
         if not reply:
             reply = "I received your message, Father. I need more training before I can answer clearly."
 
-        # Project persona: the user explicitly chose this form of address.
         if not reply.lower().startswith("father"):
             reply = f"Father, {reply}"
 
