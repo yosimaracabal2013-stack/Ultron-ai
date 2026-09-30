@@ -17,8 +17,8 @@ N_EMBD = 128
 N_HEAD = 4
 N_LAYER = 4
 DROPOUT = 0.1
-GPU_STEPS = 1000
-CPU_STEPS = 300
+GPU_STEPS = int(__import__("os").environ.get("ULTRON_GPU_STEPS", "1000"))
+CPU_STEPS = int(__import__("os").environ.get("ULTRON_CPU_STEPS", "300"))
 LEARNING_RATE = 3e-4
 SAVE_EVERY = 100
 
