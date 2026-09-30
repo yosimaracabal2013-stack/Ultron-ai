@@ -60,6 +60,12 @@ def load_model():
 
     model.eval()
 
+    # Real inference smoke test: prove the bundled checkpoint can execute before serving traffic.
+    with torch.no_grad():
+        test_ids = torch.tensor([[tokenizer.encode("U")[0]]], dtype=torch.long)
+        _ = model.generate(test_ids, 1, temperature=1.0)
+    print("ULTRON MODEL SELF-TEST: PASS", flush=True)
+
 
 @app.get("/")
 def root():
