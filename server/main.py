@@ -11,8 +11,8 @@ from ai.tokenizer import CharTokenizer
 from ai.model import UltronTransformer
 from ai.mind import UltronMind
 
-CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", "/etc/secrets/ultron_v0_2.pt"))
-TOKENIZER = Path(os.getenv("ULTRON_TOKENIZER", "/etc/secrets/tokenizer_v0_2.json"))
+CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", str(Path(__file__).resolve().parents[1] / "ai" / "checkpoints" / "ultron_v0_2.pt")))
+TOKENIZER = Path(os.getenv("ULTRON_TOKENIZER", str(Path(__file__).resolve().parents[1] / "ai" / "checkpoints" / "tokenizer_v0_2.json")))
 
 app = FastAPI(title="ULTRON v0.2 API")
 
