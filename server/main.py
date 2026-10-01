@@ -148,28 +148,37 @@ def chat(request: ChatRequest):
             memory_text = memory_text[-420:]
 
         prompt = (
-            f"Memory: {memory_text}\nUser: {message}\nULTRON:"
+            f"Memory: {memory_text}\\nUser: {message}\\nULTRON:"
             if memory_text
-            else f"User: {message}\nULTRON:"
+            else f"User: {message}\\nULTRON:"
         )
 
-        ids = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long)
+        # v0.2 is character-level and has a fixed vocabulary. Replace unsupported
+        # characters instead of turning a normal phone message into a 400 error.
+        fallback = " " if " " in tokenizer.stoi else next(iter(tokenizer.stoi))
+        prompt = "".join(ch if ch in tokenizer.stoi else fallback for ch in prompt)
+
+        ids_list = tokenizer.encode(prompt)
+        # Keep room for generation inside the model context window.
+        max_context = max(1, model.block_size - min(max(1, request.max_tokens), 80))
+        ids_list = ids_list[-max_context:]
+        ids = torch.tensor([ids_list], dtype=torch.long)
+
+        new_tokens = max(1, min(request.max_tokens, 80))
+        temperature = max(
+            0.1,
+            min(decision["temperature"] * request.temperature / 0.8, 1.5),
+        )
 
         with torch.no_grad():
-            output = model.generate(
+            generated = model.generate(
                 ids,
-                max(1, min(request.max_tokens, 300)),
-                temperature=max(
-                    0.1,
-                    min(
-                        decision["temperature"] * request.temperature / 0.8,
-                        1.5,
-                    ),
-                ),
+                new_tokens,
+                temperature=temperature,
             )[0].tolist()
 
-        text = tokenizer.decode(output)
-        reply = text[len(prompt):].strip()
+        reply_ids = generated[len(ids_list):]
+        reply = tokenizer.decode(reply_ids).strip()
 
         if not reply:
             reply = "I received your message, Father. I need more training before I can answer clearly."
@@ -186,5 +195,6 @@ def chat(request: ChatRequest):
             "emotion": mind.emotion.snapshot(),
         }
 
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        print(f"ULTRON CHAT ERROR: {type(exc).__name__}: {exc}", flush=True)
+        raise HTTPException(status_code=500, detail="ULTRON inference failed.")
