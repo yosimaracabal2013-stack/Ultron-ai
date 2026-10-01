@@ -14,6 +14,7 @@ from model import UltronTransformer
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data" / "train.txt"
+DIALOGUE = ROOT / "data" / "dialogue_v0_3.txt"
 OUT = ROOT / "checkpoints"
 OUT.mkdir(exist_ok=True)
 
@@ -99,7 +100,7 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
 
-    text = DATA.read_text(encoding="utf-8")
+    text = DATA.read_text(encoding="utf-8") + "\n\n" + DIALOGUE.read_text(encoding="utf-8")
     if len(text) < (BLOCK_SIZE + 2) * 2:
         raise ValueError("Training text is too small for v0.3.")
 
