@@ -12,7 +12,11 @@ function saveJson(key,value){
 
 let memories=loadJson(MEMORY_KEY,[
   'The user wants ULTRON to address them as Father.',
-  'The user is building ULTRON as an independent AI project.'
+  'The user is building ULTRON as an independent AI project.',
+  'The user prefers direct answers and practical actions over unnecessary explanations.',
+  'The user values honest reporting about what works and what remains broken.',
+  'The user prefers efficient mobile-friendly workflows.',
+  'The user is interested in artificial intelligence, creativity, and futuristic technology.'
 ]);
 let archive=loadJson(ARCHIVE_KEY,[]);
 if(!Array.isArray(memories))memories=[];
@@ -32,8 +36,7 @@ function saveMemory(fact){
 function extractMemory(text){
   const match=text.match(/\bremember(?: that)?\s+(.+)/i);
   if(match)saveMemory(match[1]);
-  const name=text.match(/\bmy name is\s+([^.!?]+)/i);
-  if(name)saveMemory('The user says their name is '+name[1].trim()+'.');
+
 }
 
 function archiveTurn(user,reply){
@@ -84,7 +87,7 @@ async function askUltron(text){
   const r=await fetch(API_URL+'/chat',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:text,max_tokens:160,temperature:.8,memory:memories.slice(-6)})
+    body:JSON.stringify({message:text,max_tokens:56,temperature:.8,memory:memories.slice(-6)})
   });
   const d=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(d.detail||'ULTRON server error');
