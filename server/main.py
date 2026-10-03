@@ -11,6 +11,8 @@ from ai.tokenizer import CharTokenizer
 from ai.model import UltronTransformer
 from ai.mind import UltronMind
 
+USER_PROFILE = "The user is an independent-minded builder interested in artificial intelligence, creativity, futuristic technology, and building their own AI systems. They prefer direct answers, practical actions, honest reporting, efficient mobile-friendly workflows, and avoiding repeated failed solutions. ULTRON should adapt to this communication style, remember useful project context, verify results before reporting success, and help the user learn. This profile intentionally excludes the user's name."
+
 CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", str(Path(__file__).resolve().parents[1] / "ai" / "checkpoints" / "ultron_v0_2.pt")))
 TOKENIZER = Path(os.getenv("ULTRON_TOKENIZER", str(Path(__file__).resolve().parents[1] / "ai" / "checkpoints" / "tokenizer_v0_2.json")))
 
@@ -31,7 +33,7 @@ mind = UltronMind()
 
 class ChatRequest(BaseModel):
     message: str
-    max_tokens: int = 160
+    max_tokens: int = 56
     temperature: float = 0.8
     memory: list[str] = Field(default_factory=list)
 
@@ -61,7 +63,7 @@ def load_model():
     model.eval()
 
     # Real inference smoke test: prove the bundled checkpoint can execute before serving traffic.
-    with torch.no_grad():
+    with torch.inference_mode():
         test_ids = torch.tensor([[tokenizer.encode("U")[0]]], dtype=torch.long)
         _ = model.generate(test_ids, 1, temperature=1.0)
     print("ULTRON MODEL SELF-TEST: PASS", flush=True)
@@ -148,9 +150,9 @@ def chat(request: ChatRequest):
             memory_text = memory_text[-420:]
 
         prompt = (
-            f"Memory: {memory_text}\\nUser: {message}\\nULTRON:"
+            f"PROFILE: {USER_PROFILE}\\nMEMORY: {memory_text}\\nUSER: {message}\\nULTRON:"
             if memory_text
-            else f"User: {message}\\nULTRON:"
+            else f"PROFILE: {USER_PROFILE}\\nUSER: {message}\\nULTRON:"
         )
 
         # v0.2 is character-level and has a fixed vocabulary. Replace unsupported
@@ -160,11 +162,11 @@ def chat(request: ChatRequest):
 
         ids_list = tokenizer.encode(prompt)
         # Keep room for generation inside the model context window.
-        max_context = max(1, model.block_size - min(max(1, request.max_tokens), 80))
+        max_context = max(1, model.block_size - min(max(1, request.max_tokens), 56))
         ids_list = ids_list[-max_context:]
         ids = torch.tensor([ids_list], dtype=torch.long)
 
-        new_tokens = max(1, min(request.max_tokens, 80))
+        new_tokens = max(1, min(request.max_tokens, 56))
         temperature = max(
             0.1,
             min(decision["temperature"] * request.temperature / 0.8, 1.5),
