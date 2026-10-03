@@ -90,6 +90,26 @@ def health():
     return {"ok": model is not None, "model": "ULTRON v0.2"}
 
 
+@app.get("/self")
+def self_reflection():
+    """Report observable system state; this is introspection, not consciousness."""
+    config = getattr(model, "config", None) if model is not None else None
+    return {
+        "identity": "ULTRON",
+        "feature": "self-reflection-v1",
+        "model_loaded": model is not None,
+        "tokenizer_loaded": tokenizer is not None,
+        "model_type": type(model).__name__ if model is not None else None,
+        "context_length": getattr(model, "block_size", None) if model is not None else None,
+        "token_count": len(tokenizer.stoi) if tokenizer is not None else None,
+        "session_memory_records": len(mind.memory),
+        "actions_count": mind.action_count,
+        "capabilities": ["report runtime status", "track session interaction count", "report tokenizer and context dimensions"],
+        "limitations": ["memory in this API process is temporary", "does not rewrite its own code or weights", "self-reporting does not establish consciousness"],
+        "status": "ready" if model is not None and tokenizer is not None else "model-unavailable",
+    }
+
+
 @app.get("/research")
 async def research(q: str = Query(..., min_length=2, max_length=120)):
     """Search Wikipedia's public API and return concise source cards."""
