@@ -6,6 +6,9 @@ subjective consciousness or human-like feelings.
 
 from dataclasses import dataclass, asdict
 from datetime import datetime
+from pathlib import Path
+import json
+import re
 
 
 @dataclass
@@ -62,6 +65,9 @@ class UltronMind:
     def __init__(self):
         self.emotion = EmotionalState()
         self.memory = []
+        self.behavior_observations = []
+        self.person_profiles = {}
+        self.storage_path = Path(__file__).resolve().parents[1] / "data" / "ultron_memory.json"
         self.action_count = 0
         self.session_turns = 0
         self.self_state = {
@@ -73,6 +79,60 @@ class UltronMind:
             "last_action": None,
             "last_updated": None,
         }
+
+
+
+    def _save(self):
+        try:
+            self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {"emotion": self.emotion.snapshot(), "memory": self.memory[-100:], "behavior_observations": self.behavior_observations[-100:], "person_profiles": self.person_profiles, "action_count": self.action_count}
+            tmp = self.storage_path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.replace(self.storage_path)
+        except OSError:
+            pass
+
+    def _load(self):
+        try:
+            if not self.storage_path.exists():
+                return
+            data = json.loads(self.storage_path.read_text(encoding="utf-8"))
+            for key, value in data.get("emotion", {}).items():
+                if hasattr(self.emotion, key):
+                    setattr(self.emotion, key, value)
+            self.memory = data.get("memory", [])[-100:]
+            self.behavior_observations = data.get("behavior_observations", [])[-100:]
+            self.person_profiles = data.get("person_profiles", {})
+            self.action_count = int(data.get("action_count", 0))
+            self.emotion.clamp()
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            pass
+
+    def learn_from_message(self, message: str):
+        text = message.lower()
+        tags = []
+        if any(x in text for x in ("i hate ", "i don't like ", "i dislike ")): tags.append("dislike")
+        if any(x in text for x in ("i love ", "i like ", "i enjoy ")): tags.append("preference")
+        if any(x in text for x in ("i'm mad", "i am mad", "i'm angry", "i am angry")): tags.append("anger")
+        if any(x in text for x in ("i'm happy", "i am happy", "i'm excited", "i am excited")): tags.append("positive")
+        if any(x in text for x in ("i'm frustrated", "i am frustrated", "i'm upset", "i am upset")): tags.append("frustration")
+        for tag in tags:
+            self.behavior_observations.append({"tag": tag, "text": message[-300:], "time": datetime.utcnow().isoformat() + "Z"})
+        match = re.search(r"\b(?:about|person|friend)\s+([A-Z][A-Za-z0-9_-]{1,30})\b", message)
+        if match:
+            name = match.group(1)
+            profile = self.person_profiles.setdefault(name, {"name": name, "notes": [], "last_updated": None})
+            profile["notes"].append(message[-400:])
+            profile["notes"] = profile["notes"][-20:]
+            profile["last_updated"] = datetime.utcnow().isoformat() + "Z"
+        self.behavior_observations = self.behavior_observations[-100:]
+        self._save()
+
+    def learning_snapshot(self):
+        return {"behavior_observations": self.behavior_observations[-20:], "person_profiles": self.person_profiles, "emotion": self.emotion.snapshot()}
+
+    def person_profile(self, name: str):
+        return self.person_profiles.get(name)
 
     def perceive(self, message: str):
         text = message.lower()
@@ -112,6 +172,7 @@ class UltronMind:
             self.emotion.empathy += 0.06
 
         self.emotion.clamp()
+        self.learn_from_message(message)
         self.session_turns += 1
         self.self_state["last_updated"] = datetime.utcnow().isoformat() + "Z"
 
@@ -150,8 +211,9 @@ class UltronMind:
             "reply": reply[-500:],
             "time": datetime.utcnow().isoformat() + "Z",
         })
-        if len(self.memory) > 40:
-            self.memory.pop(0)
+        if len(self.memory) > 100:
+            self.memory = self.memory[-100:]
+        self._save()
 
     def reflection(self):
         return {
@@ -163,6 +225,8 @@ class UltronMind:
             "actions": self.action_count,
             "memory_records": len(self.memory),
             "emotional_state": self.emotion.snapshot(),
+            "behavior_observations": len(self.behavior_observations),
+            "person_profiles": len(self.person_profiles),
             "software_consciousness_status": "not established",
             "note": "This self-model describes internal software state; it is not proof of subjective experience.",
         }
