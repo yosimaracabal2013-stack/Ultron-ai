@@ -6,6 +6,7 @@ import httpx
 import torch
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from ai.tokenizer import CharTokenizer
 from ai.model import UltronTransformer
@@ -16,8 +17,9 @@ USER_PROFILE = "The user is an independent-minded builder interested in artifici
 CHECKPOINT = Path(os.getenv("ULTRON_CHECKPOINT", str(Path(__file__).resolve().parents[1] / "ai" / "checkpoints" / "ultron_v0_2.pt")))
 TOKENIZER = Path(os.getenv("ULTRON_TOKENIZER", str(Path(__file__).resolve().parents[1] / "ai" / "checkpoints" / "tokenizer_v0_2.json")))
 
-app = FastAPI(title="ULTRON v0.2 API")
+app = FastAPI(title="ULTRON Standalone Server", version="1.0")
 
+# The same process can serve the UI and the neural-core API. No hosted AI API is required.\nWEB_ROOT = Path(__file__).resolve().parents[1]\n
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -69,14 +71,7 @@ def load_model():
     print("ULTRON MODEL SELF-TEST: PASS", flush=True)
 
 
-@app.get("/")
-def root():
-    return {
-        "name": "ULTRON",
-        "model": "v0.2",
-        "status": "online" if model is not None else "offline",
-    }
-
+@app.get("/", include_in_schema=False)\ndef root():\n    index = WEB_ROOT / "index.html"\n    if index.exists():\n        return FileResponse(index)\n    return {"name": "ULTRON", "model": "v0.2", "status": "online" if model is not None else "offline"}\n\n\n@app.get("/style.css", include_in_schema=False)\ndef style():\n    return FileResponse(WEB_ROOT / "style.css")\n\n\n@app.get("/app.js", include_in_schema=False)\ndef frontend_js():\n    return FileResponse(WEB_ROOT / "app.js")\n\n\n@app.get("/server-info")\ndef server_info():\n    return {\n        "name": "ULTRON",\n        "server": "ULTRON Standalone Server",\n        "inference": "local custom Transformer",\n        "external_ai_provider": None,\n        "hosting_provider": None,\n        "model": "v0.2",\n        "status": "online" if model is not None else "offline",\n    }\n
 
 @app.get("/state")
 def state():
@@ -172,7 +167,7 @@ def chat(request: ChatRequest):
             min(decision["temperature"] * request.temperature / 0.8, 1.5),
         )
 
-        with torch.no_grad():
+        with torch.inference_mode():
             generated = model.generate(
                 ids,
                 new_tokens,
