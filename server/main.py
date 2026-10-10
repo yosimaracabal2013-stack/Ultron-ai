@@ -27,11 +27,13 @@ app.add_middleware(
 model = None
 tokenizer = None
 mind = UltronMind()
+# Keep CPU inference responsive on small hosted instances.
+torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
 
 
 class ChatRequest(BaseModel):
     message: str
-    max_tokens: int = 160
+    max_tokens: int = 24
     temperature: float = 0.8
     memory: list[str] = Field(default_factory=list)
 
@@ -147,12 +149,16 @@ def chat(request: ChatRequest):
             else f"User: {message}\nULTRON:"
         )
 
-        ids = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long)
+        token_limit = max(1, min(request.max_tokens, 24, model.block_size - 1))
+        encoded = tokenizer.encode(prompt)
+        # Keep the prompt inside the model context and reserve room for new output.
+        encoded = encoded[-max(1, model.block_size - token_limit):]
+        ids = torch.tensor([encoded], dtype=torch.long)
 
-        with torch.no_grad():
+        with torch.inference_mode():
             output = model.generate(
                 ids,
-                max(1, min(request.max_tokens, 300)),
+                token_limit,
                 temperature=max(
                     0.1,
                     min(
@@ -162,8 +168,7 @@ def chat(request: ChatRequest):
                 ),
             )[0].tolist()
 
-        text = tokenizer.decode(output)
-        reply = text[len(prompt):].strip()
+        reply = tokenizer.decode(output[len(encoded):]).strip()
 
         if not reply:
             reply = "I received your message, Father. I need more training before I can answer clearly."
