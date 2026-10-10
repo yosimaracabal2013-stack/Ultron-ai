@@ -1,0 +1,19 @@
+name: Keep ULTRON neural core awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wake-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Ping lightweight health endpoint
+        run: |
+          curl --fail --silent --show-error --max-time 25 \
+            https://ultron-api-abyz.onrender.com/health
