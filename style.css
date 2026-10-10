@@ -111,3 +111,24 @@ body{min-width:0;overflow-x:hidden;line-height:1.45}
 @keyframes aura-pulse{0%,100%{opacity:.45;transform:scale(.98)}50%{opacity:.9;transform:scale(1.035)}}
 @keyframes portrait-jaw{from{transform:scaleY(1)}to{transform:scaleY(.62)}}
 @media(prefers-reduced-motion:reduce){.ultron-head,.ultron-head .head-aura,.ultron-head .portrait-mouth{animation:none!important}}
+
+
+/* COMIC ARMOR PASS — sharper metal, deeper shadows, red reactor glow. */
+:root{--ultron-red:#ff203b;--ultron-red-hot:#ff3348;--ultron-metal:#c6ccd5;--ultron-panel:#07090e}
+body{background:radial-gradient(ellipse at 48% 8%,#2b080f 0%,#0a0b10 42%,#040509 100%)}
+.panel,.module-card{border-color:#303846;box-shadow:inset 0 1px #ffffff08,0 14px 40px #0007}
+.panel-head{border-bottom-color:#6c1422}
+.section-index,.eyebrow,.top-eyebrow{letter-spacing:.17em}
+.brand-mark,.top-avatar{box-shadow:0 0 22px #ff203b30,inset 0 0 12px #ff203b18}
+.hero-robot-wrap{background:radial-gradient(ellipse at 50% 42%,#3b1018 0%,#14090e 38%,#08090d 74%);border:1px solid #54202b;position:relative;overflow:hidden}
+.hero-robot-wrap:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(115deg,transparent 0 38px,#ff263b08 39px 41px),linear-gradient(180deg,#ff263b09,transparent 45%,#0008);clip-path:polygon(0 0,92% 0,100% 8%,100% 92%,92% 100%,0 100%)}
+.ultron-head{filter:drop-shadow(0 10px 18px #000b);position:relative}
+.ultron-portrait{filter:contrast(1.14) saturate(1.14) drop-shadow(0 0 2px #e0e5ee22)}
+.ultron-head .head-aura{background:radial-gradient(ellipse,#ff203b24 0%,#ff203b0c 42%,transparent 72%)}
+.robot-caption{border-top:1px solid #531622}
+.live-chip,.core-badge{border-color:#8f1b2b}
+.live-chip,.red-text{color:#ff5265}
+.nav-item.active{box-shadow:inset 3px 0 var(--ultron-red),inset 0 0 22px #ff203b12}
+.send-btn{box-shadow:0 0 18px #ff203b20}
+.send-btn:hover,.module-card:hover{border-color:#ff3348;box-shadow:0 0 24px #ff203b1a}
+@media(max-width:700px){.hero-robot-wrap{background:radial-gradient(ellipse at 50% 38%,#3b1018 0%,#0b090e 76%)}.ultron-head{max-width:100%}}
