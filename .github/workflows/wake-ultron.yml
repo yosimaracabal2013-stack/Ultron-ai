@@ -11,9 +11,16 @@ permissions:
 jobs:
   wake-core:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 2
     steps:
       - name: Ping lightweight health endpoint
         run: |
-          curl --fail --silent --show-error --max-time 25 \
-            https://ultron-api-abyz.onrender.com/health
+          for attempt in 1 2 3; do
+              if curl --silent --show-error --max-time 45 https://ultron-api-abyz.onrender.com/health; then
+                exit 0
+              fi
+              echo "Health request $attempt timed out; retrying after 5 seconds."
+              sleep 5
+            done
+            echo "The free host is still waking up; this ping must not break the workflow."
+            exit 0
