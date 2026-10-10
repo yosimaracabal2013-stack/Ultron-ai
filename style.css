@@ -95,3 +95,19 @@ body{min-width:0;overflow-x:hidden;line-height:1.45}
  .composer-tools .tool-button{padding:8px 7px}
  .send-btn{font-size:7px;padding:9px 10px}
 }
+
+
+/* Face animation: idle movement plus jaw grille motion during speech/thinking. */
+.ultron-head{transform-origin:50% 55%;animation:ultron-idle 4.8s ease-in-out infinite;will-change:transform}
+.ultron-head .head-aura{animation:aura-pulse 2.6s ease-in-out infinite}
+.ultron-portrait{transform-origin:50% 54%;transition:filter .2s ease}
+.ultron-portrait .portrait-mouth{transform-box:fill-box;transform-origin:center}
+.ultron-head .portrait-mouth{transition:transform .12s ease}
+.ultron-head.speaking .portrait-mouth,.ultron-head.thinking .portrait-mouth{animation:portrait-jaw .15s steps(2,end) infinite alternate}
+.ultron-head.speaking .ultron-portrait{filter:drop-shadow(0 0 12px #ff233b55)}
+.ultron-head.listening .ultron-portrait{filter:drop-shadow(0 0 16px #ff233b88)}
+.ultron-head.listening .portrait-mouth{transform:scaleY(.72)}
+@keyframes ultron-idle{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(.35deg)}}
+@keyframes aura-pulse{0%,100%{opacity:.45;transform:scale(.98)}50%{opacity:.9;transform:scale(1.035)}}
+@keyframes portrait-jaw{from{transform:scaleY(1)}to{transform:scaleY(.62)}}
+@media(prefers-reduced-motion:reduce){.ultron-head,.ultron-head .head-aura,.ultron-head .portrait-mouth{animation:none!important}}
