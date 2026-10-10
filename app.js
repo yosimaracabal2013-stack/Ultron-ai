@@ -1,125 +1,25 @@
-const form=document.querySelector('#chatForm'),input=document.querySelector('#messageInput'),messages=document.querySelector('#messages'),voiceBtn=document.querySelector('#voiceBtn'),voiceOutputBtn=document.querySelector('#voiceOutputBtn'),voiceOutputLabel=document.querySelector('#voiceOutputLabel'),clearBtn=document.querySelector('#clearBtn'),statusText=document.querySelector('#statusText'),statusDot=document.querySelector('#statusDot'),systemNote=document.querySelector('#systemNote'),modelState=document.querySelector('#modelState'),sendBtn=document.querySelector('.send-btn'),emotionState=document.querySelector('#emotionState'),emotionLabel=document.querySelector('#emotionLabel'),researchForm=document.querySelector('#researchForm'),researchInput=document.querySelector('#researchInput'),researchResults=document.querySelector('#researchResults'),memoryForm=document.querySelector('#memoryForm'),memoryInput=document.querySelector('#memoryInput'),memoryList=document.querySelector('#memoryList'),memoryCount=document.querySelector('#memoryCount'),memoryStatus=document.querySelector('#memoryStatus'),emotionSummary=document.querySelector('#emotionSummary'),API_URL=window.ULTRON_API_URL||'https://ultron-api-abyz.onrender.com';
-
-const MEMORY_KEY='ultron-core-memory-v1',ARCHIVE_KEY='ultron-conversation-archive-v1',VOICE_KEY='ultron-voice-output-v1';
-let voiceOutput=localStorage.getItem(VOICE_KEY)==='on';
-let memories=loadJson(MEMORY_KEY,['The user wants ULTRON to address them as Father.','The user is building ULTRON as an independent AI project.']);
-let archive=loadJson(ARCHIVE_KEY,[]);
-if(!Array.isArray(memories))memories=[];if(!Array.isArray(archive))archive=[];
-
-function loadJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}catch{return fallback}}
-function saveJson(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch{}}
-
-function setVoiceOutput(on){
-  voiceOutput=!!on;
-  try{localStorage.setItem(VOICE_KEY,voiceOutput?'on':'off')}catch{}
-  voiceOutputBtn?.classList.toggle('on',voiceOutput);
-  if(voiceOutputLabel)voiceOutputLabel.textContent=voiceOutput?'ON':'OFF';
-  if(!voiceOutput&&'speechSynthesis' in window)window.speechSynthesis.cancel();
-}
-function speak(text){
-  if(!voiceOutput||!('speechSynthesis' in window)||!text)return;
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=navigator.language?.startsWith('en')?'en-US':(navigator.language||'en-US');
-  u.rate=.96;u.pitch=.88;u.volume=1;
-  const voices=window.speechSynthesis.getVoices();
-  const preferred=voices.find(v=>/^en-US/i.test(v.lang)&&/Samantha|Alex|Karen|Daniel/i.test(v.name))||voices.find(v=>/^en-US/i.test(v.lang))||voices.find(v=>/^en/i.test(v.lang));
-  if(preferred)u.voice=preferred;
-  window.speechSynthesis.speak(u);
-}
-if('speechSynthesis' in window)window.speechSynthesis.getVoices();
-voiceOutputBtn?.addEventListener('click',()=>setVoiceOutput(!voiceOutput));
-setVoiceOutput(voiceOutput);
-
-function saveMemory(fact){
-  const clean=String(fact||'').replace(/^that\s+/i,'').trim();
-  if(!clean||clean.length<3)return;
-  if(!memories.some(x=>x.toLowerCase()===clean.toLowerCase())){memories.push(clean);if(memories.length>100)memories=memories.slice(-100);saveJson(MEMORY_KEY,memories)}
-  renderMemory();
-}
-function extractMemory(text){
-  const match=text.match(/\bremember(?: that)?\s+(.+)/i);if(match)saveMemory(match[1]);
-  const name=text.match(/\bmy name is\s+([^.!?]+)/i);if(name)saveMemory('The user says their name is '+name[1].trim()+'.');
-}
-function archiveTurn(user,reply){archive.push({user:user.slice(-1000),reply:reply.slice(-1500),time:new Date().toISOString()});if(archive.length>60)archive=archive.slice(-60);saveJson(ARCHIVE_KEY,archive)}
-
-function renderMemory(){
-  if(!memoryList)return;
-  memoryList.replaceChildren();memoryCount.textContent=String(memories.length);memoryStatus.textContent=memories.length?'LOCAL · ACTIVE':'LOCAL · EMPTY';
-  if(!memories.length){const e=document.createElement('div');e.className='empty-state';e.textContent='MEMORY CORE EMPTY';memoryList.append(e);return}
-  memories.slice(-8).reverse().forEach(fact=>{const item=document.createElement('div');item.className='memory-item';item.textContent=fact;memoryList.append(item)})
-}
-
-function addMessage(text,role,typing=false){
-  const a=document.createElement('article');a.className=`message ${role}${typing?' typing':''}`;
-  const av=document.createElement('div');av.className='avatar';av.textContent=role==='assistant'?'U':'Y';
-  const w=document.createElement('div');w.className='bubble-wrap';
-  const s=document.createElement('span');s.className='speaker';s.textContent=role==='assistant'?'ULTRON':'YOU';
-  const t=document.createElement('time');t.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});s.append(' ',t);
-  const b=document.createElement('div');b.className='bubble';b.textContent=text;w.append(s,b);a.append(av,w);messages.append(a);messages.scrollTop=messages.scrollHeight;return a
-}
-
-function showEmotion(e){
-  if(!e||!emotionState)return;
-  const keys=['happiness','sadness','anger','fear','curiosity','frustration','confidence','calm','empathy','trust'];
-  const top=keys.reduce((a,k)=>(e[k]??0)>(e[a]??0)?k:a,keys[0]);
-  const names={happiness:'HAPPY',sadness:'SAD',anger:'ANGRY',fear:'ALERT',curiosity:'CURIOUS',frustration:'FRUSTRATED',confidence:'CONFIDENT',calm:'CALM',empathy:'EMPATHETIC',trust:'TRUSTING'};
-  const label=names[top]||'CALM';emotionLabel.textContent=label;emotionSummary.textContent=label;emotionState.title=keys.map(k=>k.toUpperCase()+': '+Math.round((e[k]??0)*100)+'%').join(' · ')
-}
-
-async function askUltron(text){
-  extractMemory(text);
-  const r=await fetch(API_URL+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,max_tokens:160,temperature:.8,memory:memories.slice(-6)})});
-  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.detail||'ULTRON server error');showEmotion(d.emotion);return d.reply
-}
-
-async function research(query){
-  researchResults.innerHTML='<div class="empty-state">RESEARCHING…</div>';
-  const r=await fetch(API_URL+'/research?q='+encodeURIComponent(query));const d=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(d.detail||'Research failed');researchResults.replaceChildren();
-  if(!d.results?.length){const e=document.createElement('div');e.className='empty-state';e.textContent='NO SOURCES FOUND';researchResults.append(e);return}
-  d.results.forEach(item=>{const card=document.createElement('a');card.className='research-card';card.href=item.url;card.target='_blank';card.rel='noopener noreferrer';const title=document.createElement('strong');title.textContent=item.title;const desc=document.createElement('small');desc.textContent=(item.description||'Source available on Wikipedia').replace(/<[^>]*>/g,'').slice(0,220);const source=document.createElement('em');source.textContent=item.source.toUpperCase();card.append(title,desc,source);researchResults.append(card)})
-}
-
-async function updateConnectionStatus(){
-  try{
-    const r=await fetch(API_URL+'/health');if(!r.ok)throw Error();
-    statusText.textContent='SYSTEM ONLINE';statusDot.className='online';systemNote.textContent='NEURAL CORE CONNECTED';modelState.textContent=`MODEL ONLINE · MEMORY ${memories.length}`;
-    try{const s=await fetch(API_URL+'/state');if(s.ok)showEmotion((await s.json()).emotion)}catch{}
-  }catch{
-    statusText.textContent='CORE OFFLINE';statusDot.className='offline';systemNote.textContent='WAITING FOR NEURAL CORE';modelState.textContent=`MODEL STANDBY · MEMORY ${memories.length}`;
-  }
-}
-
-async function sendMessage(text){
-  addMessage(text,'user');input.value='';const thinking=addMessage('···','assistant',true);sendBtn.disabled=true;
-  try{
-    const reply=await askUltron(text);thinking.classList.remove('typing');thinking.querySelector('.bubble').textContent=reply;archiveTurn(text,reply);modelState.textContent=`MODEL ONLINE · MEMORY ${memories.length} · ARCHIVE ${archive.length}`;speak(reply);
-  }catch(e){
-    thinking.classList.remove('typing');thinking.querySelector('.bubble').textContent='My neural core is unavailable right now. The interface is online, but the inference server needs attention.';statusText.textContent='CORE OFFLINE';statusDot.className='offline';
-  }finally{sendBtn.disabled=false;input.focus()}
-}
-
-form.addEventListener('submit',e=>{e.preventDefault();const text=input.value.trim();if(text)sendMessage(text)});
+const $=s=>document.querySelector(s);
+const boot=$('#bootScreen'),bootStatus=$('#bootStatus');
+const bootMessages=['INITIALIZING NEURAL CORE','LOADING MEMORY MATRIX','CONNECTING NEURAL CORE','SYSTEM CHECK COMPLETE','ULTRON ONLINE'];
+let bootStep=0;const bootTimer=setInterval(()=>{bootStep=Math.min(bootStep+1,4);if(bootStatus)bootStatus.textContent=bootMessages[bootStep]},160);
+setTimeout(()=>{clearInterval(bootTimer);if(bootStatus)bootStatus.textContent='ULTRON ONLINE';setTimeout(()=>boot?.classList.add('done'),120)},850);
+const API_URL=window.ULTRON_API_URL||'https://ultron-api-abyz.onrender.com';
+const form=$('#chatForm'),input=$('#messageInput'),messages=$('#messages'),head=$('#ultronHead'),statusText=$('#statusText'),statusDot=$('#statusDot'),systemNote=$('#systemNote'),send=$('.send-btn'),clear=$('#clearBtn'),voice=$('#voiceBtn'),toggle=$('#speakToggle'),emotion=$('#emotionLabel'),memoryForm=$('#memoryForm'),memoryInput=$('#memoryInput'),memoryList=$('#memoryList'),memoryCount=$('#memoryCount'),researchForm=$('#researchForm'),researchInput=$('#researchInput'),researchResults=$('#researchResults'),profileForm=$('#profileForm'),profileInput=$('#profileInput'),modelState=$('#modelState');
+let voiceOn=true;
+const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(f))}catch{return f}};
+let memories=read('ultron-memory',[]),profile=localStorage.getItem('ultron-profile')||'';
+profileInput.value=profile;
+function add(t,role){const a=document.createElement('article');a.className='message '+role;const tag=document.createElement('div');tag.className='message-tag';tag.textContent=role==='assistant'?'ULTRON':'YOU';const b=document.createElement('div');b.className='bubble';b.textContent=t;a.append(tag,b);messages.append(a);messages.scrollTop=messages.scrollHeight;return b}
+function renderMemory(){memoryList.replaceChildren();memories.slice(-8).forEach((m,i)=>{const e=document.createElement('div');e.className='memory-item';e.textContent=m;memoryList.append(e)});memoryCount.textContent=String(memories.length)}
+function speak(t){if(!voiceOn||!('speechSynthesis'in window))return;const u=new SpeechSynthesisUtterance(t.replace(/^Father,\s*/i,''));u.pitch=.78;u.rate=.96;u.onstart=()=>head?.classList.add('speaking');u.onend=()=>head?.classList.remove('speaking');speechSynthesis.cancel();speechSynthesis.speak(u)}
+async function status(){try{const r=await fetch(API_URL+'/health');if(!r.ok)throw Error();const d=await r.json();statusText.textContent=d.ok?'SYSTEM ONLINE':'MODEL NOT READY';statusDot.className=d.ok?'online':'offline';systemNote.textContent=d.ok?'NEURAL CORE ONLINE':'MODEL NOT LOADED';modelState.textContent=d.ok?'MODEL ONLINE':'MODEL NOT READY'}catch{statusText.textContent='SERVER OFFLINE';statusDot.className='offline';systemNote.textContent='NEURAL CORE OFFLINE';modelState.textContent='API UNREACHABLE'}}
+async function chat(t){add(t,'user');input.value='';const b=add('Processing…','assistant');send.disabled=true;head?.classList.add('listening');try{const memory=[...memories.slice(-6),...(profile?['Father profile: '+profile]:[])];const r=await fetch(API_URL+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:t,max_tokens:56,memory})});const d=await r.json();if(!r.ok)throw Error(d.detail||'server error');b.textContent=d.reply||'I need more training to answer that.';if(d.emotion){const k=Object.entries(d.emotion).sort((a,b)=>b[1]-a[1])[0]?.[0];emotion.textContent=(k||'calm').toUpperCase()}speak(d.reply||'')}catch(e){b.textContent='ULTRON cannot reach the neural core right now. Check that the server is online.';status()}finally{head?.classList.remove('listening');send.disabled=false;input.focus()}}
+form.addEventListener('submit',e=>{e.preventDefault();const t=input.value.trim();if(t)chat(t)});
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
-
-researchForm?.addEventListener('submit',async e=>{e.preventDefault();const q=researchInput.value.trim();if(!q)return;try{await research(q)}catch{researchResults.innerHTML='<div class="empty-state">RESEARCH CORE OFFLINE</div>'}});
-memoryForm?.addEventListener('submit',e=>{e.preventDefault();const fact=memoryInput.value.trim();if(fact){saveMemory(fact);memoryInput.value=''}});
-
-clearBtn.addEventListener('click',()=>{messages.replaceChildren();addMessage('Conversation cleared. Neural core standing by. My saved memory remains available.','assistant')});
-document.querySelectorAll('.quick-card').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.prompt;input.focus()}));
-
-let recognition=null;const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SpeechRecognition){
-  recognition=new SpeechRecognition();recognition.lang=navigator.language||'en-US';recognition.interimResults=false;recognition.continuous=false;
-  recognition.addEventListener('start',()=>{voiceBtn.classList.add('listening');voiceBtn.textContent='STOP';statusText.textContent='MIC LISTENING'});
-  recognition.addEventListener('result',e=>{const tr=e.results?.[0]?.[0]?.transcript;if(tr){input.value=tr;input.focus()}});
-  recognition.addEventListener('error',()=>{statusText.textContent='VOICE INPUT ERROR'});
-  recognition.addEventListener('end',()=>{voiceBtn.classList.remove('listening');voiceBtn.textContent='MIC';updateConnectionStatus()});
-}
-voiceBtn.addEventListener('click',()=>{
-  if(!recognition){addMessage('Voice input is not supported by this browser. Type a message instead.','assistant');return}
-  try{recognition.start()}catch{statusText.textContent='MIC ALREADY ACTIVE'}
-});
-
-renderMemory();updateConnectionStatus();
+clear.addEventListener('click',()=>{messages.replaceChildren();add('Conversation cleared. Neural core standing by.','assistant')});
+toggle.addEventListener('click',()=>{voiceOn=!voiceOn;toggle.textContent=voiceOn?'VOICE ON':'VOICE OFF';if(!voiceOn&&'speechSynthesis'in window)speechSynthesis.cancel()});
+memoryForm.addEventListener('submit',e=>{e.preventDefault();const m=memoryInput.value.trim();if(!m)return;memories.push(m);memories=memories.slice(-30);localStorage.setItem('ultron-memory',JSON.stringify(memories));memoryInput.value='';renderMemory()});
+profileForm.addEventListener('submit',e=>{e.preventDefault();profile=profileInput.value.trim();localStorage.setItem('ultron-profile',profile);const old=$('#profileSaved');if(old)old.remove();const note=document.createElement('div');note.id='profileSaved';note.className='memory-item';note.textContent='Profile saved on this device.';profileForm.append(note)});
+researchForm.addEventListener('submit',async e=>{e.preventDefault();const q=researchInput.value.trim();if(q.length<2)return;researchResults.textContent='Searching…';try{const r=await fetch(API_URL+'/research?q='+encodeURIComponent(q));const d=await r.json();if(!r.ok)throw Error(d.detail||'Search unavailable');researchResults.replaceChildren();(d.results||[]).forEach(item=>{const card=document.createElement('div');card.className='research-card';const a=document.createElement('a');a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=item.title;const p=document.createElement('div');p.textContent=item.description||'';card.append(a,p);researchResults.append(card)});if(!d.results?.length)researchResults.textContent='No results found.'}catch{researchResults.textContent='Research service is unavailable right now.'}});
+voice.addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){add('Voice input is not supported in this browser.','assistant');return}const rec=new SR();rec.lang='en-US';rec.interimResults=false;head?.classList.add('listening');rec.onresult=e=>{input.value=e.results[0][0].transcript;form.requestSubmit()};rec.onerror=()=>add('Voice input did not work. You can type instead.','assistant');rec.onend=()=>head?.classList.remove('listening');rec.start()});
+renderMemory();status();
