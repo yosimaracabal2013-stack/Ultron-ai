@@ -33,7 +33,7 @@ torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
 
 class ChatRequest(BaseModel):
     message: str
-    max_tokens: int = 24
+    max_tokens: int = 48
     temperature: float = 0.8
     memory: list[str] = Field(default_factory=list)
 
@@ -149,7 +149,7 @@ def chat(request: ChatRequest):
             else f"User: {message}\nULTRON:"
         )
 
-        token_limit = max(1, min(request.max_tokens, 24, model.block_size - 1))
+        token_limit = max(1, min(request.max_tokens, 48, model.block_size - 1))
         encoded = tokenizer.encode(prompt)
         # Keep the prompt inside the model context and reserve room for new output.
         encoded = encoded[-max(1, model.block_size - token_limit):]
