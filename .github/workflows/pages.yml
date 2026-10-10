@@ -15,9 +15,8 @@ permissions:
   pages: write
   id-token: write
 
-# Do not cancel a good deployment just because another UI file was pushed.
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -27,21 +26,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
+      - uses: actions/checkout@v4
+      - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Prepare static site
         run: |
           mkdir -p _site
           cp index.html style.css app.js _site/
           touch _site/.nojekyll
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
