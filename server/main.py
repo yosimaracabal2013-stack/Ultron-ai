@@ -1,6 +1,7 @@
 """ULTRON v0.2 inference and research API."""
 
 from pathlib import Path
+from uuid import uuid4
 import os
 import httpx
 import torch
