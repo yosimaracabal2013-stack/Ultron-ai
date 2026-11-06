@@ -31,6 +31,15 @@ mind = UltronMind()
 torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
 
 
+class AgentTaskRequest(BaseModel):
+    goal: str = Field(min_length=3, max_length=500)
+
+
+class AgentActionRequest(BaseModel):
+    action_id: str = Field(min_length=1, max_length=80)
+    approved: bool = False
+
+
 class ChatRequest(BaseModel):
     message: str
     max_tokens: int = 48
@@ -167,6 +176,74 @@ def _local_reply(message: str, memories: list[str]) -> str:
     if any(k in low for k in ("thank", "nice", "good job", "works")):
         return "Acknowledged, Father. I'll keep the next step clear and practical."
     return "I'm listening, Father. My independent language model is still being trained, so I don't want to invent an answer. Give me a specific task or use the Research module when you need factual information."
+
+
+
+
+# Constrained agent kernel: no arbitrary shell execution or silent code changes.
+AGENT_IDENTITY = {
+    "name": "ULTRON", "version": "2.0-agent-kernel",
+    "principles": ["be truthful", "explain uncertainty", "ask before external changes",
+                   "never expose credentials", "keep a verifiable action log"],
+    "capabilities": ["plan_tasks", "inspect_status", "research"],
+    "limitations": ["not conscious", "cannot modify deployed code autonomously",
+                    "cannot execute arbitrary commands", "private account access requires authorization"],
+}
+PENDING_ACTIONS = {}
+
+
+def _make_plan(goal: str):
+    low = goal.lower()
+    steps = []
+    if any(w in low for w in ("research", "find", "look up", "investigate", "learn")):
+        steps.append({"tool": "research", "description": "Research the goal using public reference material", "requires_approval": True})
+    if any(w in low for w in ("status", "health", "online", "server", "system")):
+        steps.append({"tool": "system_status", "description": "Inspect ULTRON API and model status", "requires_approval": False})
+    if any(w in low for w in ("code", "edit", "change", "deploy", "build", "fix", "upgrade")):
+        steps.append({"tool": "code_change_proposal", "description": "Prepare a code-change proposal; no files are modified", "requires_approval": True})
+    if not steps:
+        steps.append({"tool": "task_breakdown", "description": "Break the goal into a checklist", "requires_approval": False})
+    plan_id = str(uuid4())
+    for step in steps:
+        step["action_id"] = str(uuid4())
+        step["status"] = "awaiting_approval" if step["requires_approval"] else "ready"
+        PENDING_ACTIONS[step["action_id"]] = {"plan_id": plan_id, "tool": step["tool"], "goal": goal}
+    return {"plan_id": plan_id, "goal": goal, "steps": steps,
+            "notice": "External changes require approval. Planning does not modify files."}
+
+
+@app.get("/agent")
+def agent_identity():
+    return {**AGENT_IDENTITY, "status": "online", "pending_actions": len(PENDING_ACTIONS)}
+
+
+@app.post("/agent/plan")
+def agent_plan(request: AgentTaskRequest):
+    return _make_plan(request.goal)
+
+
+@app.post("/agent/execute")
+async def agent_execute(request: AgentActionRequest):
+    action = PENDING_ACTIONS.get(request.action_id)
+    if not action:
+        raise HTTPException(status_code=404, detail="Action not found or expired.")
+    tool = action["tool"]
+    if tool == "system_status":
+        result = {"api": "online", "model_loaded": model is not None,
+                  "session_memory_items": len(mind.memory), "session_actions": mind.action_count}
+    elif tool in ("research", "code_change_proposal") and not request.approved:
+        raise HTTPException(status_code=403, detail="Approval required.")
+    elif tool == "research":
+        result = {"next_endpoint": "/research", "query_required": True,
+                  "message": "Submit a focused query to the research endpoint."}
+    elif tool == "code_change_proposal":
+        result = {"status": "proposal_only", "message": "No files changed; a human must review and apply a patch."}
+    else:
+        result = {"status": "checklist", "goal": action["goal"],
+                  "steps": ["Clarify the outcome", "Gather required information",
+                            "Complete one step at a time", "Verify the result"]}
+    PENDING_ACTIONS.pop(request.action_id, None)
+    return {"action_id": request.action_id, "tool": tool, "result": result}
 
 
 @app.post("/chat")
