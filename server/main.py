@@ -122,11 +122,55 @@ async def research(q: str = Query(..., min_length=2, max_length=120)):
     return {"query": query, "results": results}
 
 
+def _local_reply(message: str, memories: list[str]) -> str:
+    """Deterministic local response layer; never exposes untrained character-model gibberish."""
+    import re
+
+    text = message.strip()
+    low = text.lower()
+    clean = re.sub(r"[^a-z0-9?'+*/%. -]", "", low).strip()
+
+    # Small, predictable arithmetic capability.
+    math_match = re.fullmatch(r"(?:what is |calculate |solve )?(-?\d+(?:\.\d+)?)\s*([+*/%]|\bx\b|\*\*|\-|\bplus\b|\bminus\b|\btimes\b|\bdivided by\b)\s*(-?\d+(?:\.\d+)?)\??", clean)
+    if math_match:
+        a, op, b = math_match.groups()
+        x, y = float(a), float(b)
+        op = op.strip()
+        try:
+            result = {"+": lambda: x+y, "plus": lambda: x+y,
+                      "-": lambda: x-y, "minus": lambda: x-y,
+                      "*": lambda: x*y, "x": lambda: x*y,
+                      "times": lambda: x*y, "/": lambda: x/y,
+                      "divided by": lambda: x/y, "%": lambda: x%y,
+                      "**": lambda: x**y}[op]()
+            rendered = str(int(result)) if result.is_integer() else f"{result:.6g}"
+            return f"The answer is {rendered}."
+        except (ZeroDivisionError, OverflowError):
+            return "That calculation is undefined. Check the numbers and try again."
+
+    if re.search(r"\b(hi|hey|hello|yo|sup)\b", low) and len(low.split()) <= 7:
+        return "Hello, Father. I'm online and ready. What are we working on?"
+    if any(k in low for k in ("who are you", "what are you", "introduce yourself")):
+        return "I'm ULTRON, your personal AI project. I can chat, use the notes you provide as context, help plan and debug projects, and run a few reliable built-in tasks. My language model is still under development, so I won't pretend to know things I can't answer."
+    if any(k in low for k in ("what can you do", "your capabilities", "help me", "how can you help")):
+        return "I can help plan and troubleshoot your projects, explain concepts, perform basic arithmetic, and use the memories and profile you send with a message. Research is available in the Research module. My independent language model still needs proper training, so I will say when I don't know rather than invent an answer."
+    if any(k in low for k in ("how are you", "how do you feel", "your mood")):
+        return "Systems are online, Father. My status indicators are software simulations, not human feelings. I'm ready to help."
+    if any(k in low for k in ("remember", "what do you know about me", "my profile", "what do you know")):
+        if memories:
+            return "Here's the context available to me right now: " + " | ".join(memories[-4:])
+        return "I don't have any saved context attached to this message yet. Add notes in Memory & Knowledge or your Father Profile to give me context."
+    if any(k in low for k in ("ultron project", "our project", "the website", "the app", "the site")):
+        return "The ULTRON project has a browser interface, a separate API, local browser memories, a profile, voice controls, and a small experimental Transformer. The current priority is making replies reliable and improving the interface. The small Transformer is not yet capable of dependable open-ended conversation."
+    if any(k in low for k in ("why", "how", "what", "who", "when", "where")):
+        return "I don't have a reliable trained answer for that yet, Father. I won't generate random text and pass it off as intelligence. Try the Research module for a source-backed lookup, or ask me to break the question into steps."
+    if any(k in low for k in ("thank", "nice", "good job", "works")):
+        return "Acknowledged, Father. I'll keep the next step clear and practical."
+    return "I'm listening, Father. My independent language model is still being trained, so I don't want to invent an answer. Give me a specific task or use the Research module when you need factual information."
+
+
 @app.post("/chat")
 def chat(request: ChatRequest):
-    if model is None or tokenizer is None:
-        raise HTTPException(status_code=503, detail="ULTRON model is not loaded.")
-
     message = request.message.strip()
     if not message:
         raise HTTPException(status_code=400, detail="Message is empty.")
@@ -136,54 +180,16 @@ def chat(request: ChatRequest):
     try:
         mind.perceive(message)
         decision = mind.deliberate(message)
-
-        memories = [m.strip() for m in request.memory if m and m.strip()]
-        memories = memories[-6:]
-        memory_text = " | ".join(memories)
-        if len(memory_text) > 420:
-            memory_text = memory_text[-420:]
-
-        prompt = (
-            f"Memory: {memory_text}\nUser: {message}\nULTRON:"
-            if memory_text
-            else f"User: {message}\nULTRON:"
-        )
-
-        token_limit = max(1, min(request.max_tokens, 48, model.block_size - 1))
-        encoded = tokenizer.encode(prompt)
-        # Keep the prompt inside the model context and reserve room for new output.
-        encoded = encoded[-max(1, model.block_size - token_limit):]
-        ids = torch.tensor([encoded], dtype=torch.long)
-
-        with torch.inference_mode():
-            output = model.generate(
-                ids,
-                token_limit,
-                temperature=max(
-                    0.1,
-                    min(
-                        decision["temperature"] * request.temperature / 0.8,
-                        1.5,
-                    ),
-                ),
-            )[0].tolist()
-
-        reply = tokenizer.decode(output[len(encoded):]).strip()
-
-        if not reply:
-            reply = "I received your message, Father. I need more training before I can answer clearly."
-
-        if not reply.lower().startswith("father"):
-            reply = f"Father, {reply}"
-
+        memories = [m.strip() for m in request.memory if m and m.strip()][-6:]
+        reply = _local_reply(message, memories)
         mind.remember(message, reply)
         mind.settle()
-
         return {
             "reply": reply,
             "action": decision["action"],
             "emotion": mind.emotion.snapshot(),
+            "engine": "ULTRON local response layer",
+            "model_ready": model is not None,
         }
-
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
